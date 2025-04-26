@@ -406,6 +406,8 @@ for result_filename in p["result_filenames"]:
                         est_per_object[obj_id]["gt_id"].append(gt_id)
                         est_per_object[obj_id]["scores"].append(est["score"])
 
+        
+        logger.info("Calculating errors...")
         # calculate errors
         scene_errs = {}
         for obj_id in est_per_object:
