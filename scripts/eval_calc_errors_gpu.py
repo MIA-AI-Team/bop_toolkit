@@ -330,8 +330,8 @@ for result_filename in p["result_filenames"]:
 
         for im_ind, (im_id, im_targets) in enumerate(scene_targets.items()):
 
-            if im_ind % 10 == 0:
-                logger.info(f"Processing scene: {scene_id}, im: {im_ind}")
+            # if im_ind % 10 == 0:
+            logger.info(f"Processing scene: {scene_id}, im: {im_ind}")
 
             # Create im_targets directly from scene_gt and scene_gt_info.
             im_gt = scene_gt[im_id]
