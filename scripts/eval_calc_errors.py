@@ -230,22 +230,32 @@ for result_filename in p["result_filenames"]:
         for obj_id in dp_model["obj_ids"]:
             ren.add_object(obj_id, dp_model["model_tpath"].format(obj_id=obj_id))
 
-    # Load the estimation targets.
-    targets = inout.load_json(
-        os.path.join(dp_split["base_path"], p["targets_filename"])
-    )
-
-    # Organize the targets by scene, image and object.
-    logger.info("Organizing estimation targets...")
-    # targets_org : {"scene_id": {"im_id": {5: {"im_id": 3, "inst_count": 1, "obj_id": 3, "scene_id": 48}}}}
+    # Discover estimation targets directly from dataset GT (no test_targets.json).
+    logger.info("Discovering estimation targets from dataset ground-truth...")
     targets_org = {}
-    
-    for target in targets:
-        if p["eval_mode"] == "localization":
-            assert "inst_count" in target, "inst_count is required for localization eval_mode" 
-            targets_org.setdefault(target["scene_id"], {}).setdefault(target["im_id"], {})[target["obj_id"]] = target
-        else:
-            targets_org.setdefault(target["scene_id"], {})[target["im_id"]] = target
+    for scene_id in dp_split["scene_ids"]:
+        tpath_keys = dataset_params.scene_tpaths_keys(
+            dp_split["eval_modality"], dp_split["eval_sensor"], scene_id
+        )
+        scene_gt = inout.load_scene_gt(
+            dp_split[tpath_keys["scene_gt_tpath"]].format(scene_id=scene_id)
+        )
+        scene_gt_info = inout.load_scene_gt(
+            dp_split[tpath_keys["scene_gt_info_tpath"]].format(scene_id=scene_id)
+        )
+        for im_id, gt_list in scene_gt.items():
+            # count instances per object
+            counts = {}
+            for gt in gt_list:
+                counts[gt["obj_id"]] = counts.get(gt["obj_id"], 0) + 1
+            # build per-image targets
+            targets_org.setdefault(scene_id, {})[im_id] = {}
+            for gt_id, gt in enumerate(gt_list):
+                obj_id = gt["obj_id"]
+                tgt = {"scene_id": scene_id, "im_id": im_id, "obj_id": obj_id}
+                if p["eval_mode"] == "localization":
+                    tgt["inst_count"] = counts[obj_id]
+                targets_org[scene_id][im_id][obj_id] = tgt
 
     # Load pose estimates.
     logger.info("Loading pose estimates...")
