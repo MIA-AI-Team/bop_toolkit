@@ -441,7 +441,7 @@ for result_filename in p["result_filenames"]:
                 )
             else:
                 raise ValueError(f"Unknown error type: {p['error_type']}")
-
+            logger.info(f"Errors calculated for object {obj_id}: {errors.shape}")
             errors = errors.cpu().numpy().tolist()
             for i in range(len(errors)):
                 # for each scene_id, im_id, obj_id, est_id, save the errors wrt gt_id
@@ -483,6 +483,7 @@ for result_filename in p["result_filenames"]:
         # Save the calculated errors.
         error_sign = misc.get_error_signature(p["error_type"], p["n_top"])
         save_errors(error_sign, scene_errs)
+        time.sleep(1)
 
     time_total = time.time() - time_start
     logger.info(
